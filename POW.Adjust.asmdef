@@ -1,7 +1,9 @@
 {
     "name": "POW.Adjust",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "Pow.AidKit"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

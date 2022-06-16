@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using pow.aidkit;
 using UnityEngine;
 
 namespace com.adjust.sdk
@@ -8,69 +9,48 @@ namespace com.adjust.sdk
     {
         private const string errorMsgEditor = "[Adjust]: SDK can not be used in Editor.";
         private const string errorMsgStart = "[Adjust]: SDK not started. Start it manually using the 'start' method.";
-        private const string errorMsgPlatform = "[Adjust]: SDK can only be used in Android, iOS, Windows Phone 8.1, Windows Store or Universal Windows apps.";
+
+        private const string errorMsgPlatform =
+            "[Adjust]: SDK can only be used in Android, iOS, Windows Phone 8.1, Windows Store or Universal Windows apps.";
 
         // [Header("SDK SETTINGS:")]
         // [Space(5)]
         // [Tooltip("If selected, it is expected from you to initialize Adjust SDK from your app code. " +
         //     "Any SDK configuration settings from prefab will be ignored in that case.")]
-        [HideInInspector]
-        public bool startManually = true;
-        [HideInInspector]
-        public string appToken;
-        [HideInInspector]
-        public AdjustEnvironment environment = AdjustEnvironment.Sandbox;
-        [HideInInspector]
-        public AdjustLogLevel logLevel = AdjustLogLevel.Info;
-        [HideInInspector]
-        public bool eventBuffering = false;
-        [HideInInspector]
-        public bool sendInBackground = false;
-        [HideInInspector]
-        public bool launchDeferredDeeplink = true;
-        [HideInInspector]
-        public bool needsCost = false;
-        [HideInInspector]
-        public bool coppaCompliant = false;
-        [HideInInspector]
-        public string defaultTracker;
-        [HideInInspector]
-        public AdjustUrlStrategy urlStrategy = AdjustUrlStrategy.Default;
-        [HideInInspector]
-        public double startDelay = 0;
+        [SerializeField] private GameEvent onAdjustInitialized;
+        [HideInInspector] public bool startManually = true;
+        [HideInInspector] public string appToken;
+        [HideInInspector] public AdjustEnvironment environment = AdjustEnvironment.Sandbox;
+        [HideInInspector] public AdjustLogLevel logLevel = AdjustLogLevel.Info;
+        [HideInInspector] public bool eventBuffering = false;
+        [HideInInspector] public bool sendInBackground = false;
+        [HideInInspector] public bool launchDeferredDeeplink = true;
+        [HideInInspector] public bool needsCost = false;
+        [HideInInspector] public bool coppaCompliant = false;
+        [HideInInspector] public string defaultTracker;
+        [HideInInspector] public AdjustUrlStrategy urlStrategy = AdjustUrlStrategy.Default;
+        [HideInInspector] public double startDelay = 0;
 
         // [Header("APP SECRET:")]
         // [Space(5)]
-        [HideInInspector]
-        public long secretId = 0;
-        [HideInInspector]
-        public long info1 = 0;
-        [HideInInspector]
-        public long info2 = 0;
-        [HideInInspector]
-        public long info3 = 0;
-        [HideInInspector]
-        public long info4 = 0;
+        [HideInInspector] public long secretId = 0;
+        [HideInInspector] public long info1 = 0;
+        [HideInInspector] public long info2 = 0;
+        [HideInInspector] public long info3 = 0;
+        [HideInInspector] public long info4 = 0;
 
         // [Header("ANDROID SPECIFIC FEATURES:")]
         // [Space(5)]
-        [HideInInspector]
-        public bool preinstallTracking = false;
-        [HideInInspector]
-        public string preinstallFilePath;
-        [HideInInspector]
-        public bool playStoreKidsApp = false;
+        [HideInInspector] public bool preinstallTracking = false;
+        [HideInInspector] public string preinstallFilePath;
+        [HideInInspector] public bool playStoreKidsApp = false;
 
         // [Header("iOS SPECIFIC FEATURES:")]
         // [Space(5)]
-        [HideInInspector]
-        public bool iadInfoReading = true;
-        [HideInInspector]
-        public bool adServicesInfoReading = true;
-        [HideInInspector]
-        public bool idfaInfoReading = true;
-        [HideInInspector]
-        public bool skAdNetworkHandling = true;
+        [HideInInspector] public bool iadInfoReading = true;
+        [HideInInspector] public bool adServicesInfoReading = true;
+        [HideInInspector] public bool idfaInfoReading = true;
+        [HideInInspector] public bool skAdNetworkHandling = true;
 
 #if UNITY_IOS
         // Delegate references for iOS callback triggering
@@ -86,7 +66,7 @@ namespace com.adjust.sdk
 
         void Awake()
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -104,7 +84,8 @@ namespace com.adjust.sdk
 
             if (!this.startManually)
             {
-                AdjustConfig adjustConfig = new AdjustConfig(this.appToken, this.environment, (this.logLevel == AdjustLogLevel.Suppress));
+                AdjustConfig adjustConfig = new AdjustConfig(this.appToken, this.environment,
+                    (this.logLevel == AdjustLogLevel.Suppress));
                 adjustConfig.setLogLevel(this.logLevel);
                 adjustConfig.setSendInBackground(this.sendInBackground);
                 adjustConfig.setEventBufferingEnabled(this.eventBuffering);
@@ -125,13 +106,15 @@ namespace com.adjust.sdk
                 {
                     adjustConfig.deactivateSKAdNetworkHandling();
                 }
+
                 Adjust.start(adjustConfig);
+                onAdjustInitialized?.Invoke();
             }
         }
 
         void OnApplicationPause(bool pauseStatus)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -139,14 +122,14 @@ namespace com.adjust.sdk
 #if UNITY_IOS
                 // No action, iOS SDK is subscribed to iOS lifecycle notifications.
 #elif UNITY_ANDROID
-                if (pauseStatus)
-                {
-                    AdjustAndroid.OnPause();
-                }
-                else
-                {
-                    AdjustAndroid.OnResume();
-                }
+            if (pauseStatus)
+            {
+                AdjustAndroid.OnPause();
+            }
+            else
+            {
+                AdjustAndroid.OnResume();
+            }
 #elif (UNITY_WSA || UNITY_WP8)
                 if (pauseStatus)
                 {
@@ -163,7 +146,7 @@ namespace com.adjust.sdk
 
         public static void start(AdjustConfig adjustConfig)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -194,7 +177,7 @@ namespace com.adjust.sdk
 
         public static void trackEvent(AdjustEvent adjustEvent)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -217,7 +200,7 @@ namespace com.adjust.sdk
 
         public static void setEnabled(bool enabled)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -254,7 +237,7 @@ namespace com.adjust.sdk
 
         public static void setOfflineMode(bool enabled)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -272,7 +255,7 @@ namespace com.adjust.sdk
 
         public static void setDeviceToken(string deviceToken)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -290,7 +273,7 @@ namespace com.adjust.sdk
 
         public static void gdprForgetMe()
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -308,7 +291,7 @@ namespace com.adjust.sdk
 
         public static void disableThirdPartySharing()
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -326,7 +309,7 @@ namespace com.adjust.sdk
 
         public static void appWillOpenUrl(string url)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -344,7 +327,7 @@ namespace com.adjust.sdk
 
         public static void sendFirstPackages()
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -362,7 +345,7 @@ namespace com.adjust.sdk
 
         public static void addSessionPartnerParameter(string key, string value)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -380,7 +363,7 @@ namespace com.adjust.sdk
 
         public static void addSessionCallbackParameter(string key, string value)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -398,7 +381,7 @@ namespace com.adjust.sdk
 
         public static void removeSessionPartnerParameter(string key)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -416,7 +399,7 @@ namespace com.adjust.sdk
 
         public static void removeSessionCallbackParameter(string key)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -434,7 +417,7 @@ namespace com.adjust.sdk
 
         public static void resetSessionPartnerParameters()
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -452,7 +435,7 @@ namespace com.adjust.sdk
 
         public static void resetSessionCallbackParameters()
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -470,7 +453,7 @@ namespace com.adjust.sdk
 
         public static void trackAdRevenue(string source, string payload)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -488,7 +471,7 @@ namespace com.adjust.sdk
 
         public static void trackAdRevenue(AdjustAdRevenue adRevenue)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -506,7 +489,7 @@ namespace com.adjust.sdk
 
         public static void trackAppStoreSubscription(AdjustAppStoreSubscription subscription)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -524,7 +507,7 @@ namespace com.adjust.sdk
 
         public static void trackPlayStoreSubscription(AdjustPlayStoreSubscription subscription)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -542,7 +525,7 @@ namespace com.adjust.sdk
 
         public static void trackThirdPartySharing(AdjustThirdPartySharing thirdPartySharing)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -560,7 +543,7 @@ namespace com.adjust.sdk
 
         public static void trackMeasurementConsent(bool measurementConsent)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -576,9 +559,10 @@ namespace com.adjust.sdk
 #endif
         }
 
-        public static void requestTrackingAuthorizationWithCompletionHandler(Action<int> statusCallback, string sceneName = "Adjust")
+        public static void requestTrackingAuthorizationWithCompletionHandler(Action<int> statusCallback,
+            string sceneName = "Adjust")
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -601,7 +585,7 @@ namespace com.adjust.sdk
 
         public static void updateConversionValue(int conversionValue)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -619,7 +603,7 @@ namespace com.adjust.sdk
 
         public static void checkForNewAttStatus()
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -758,7 +742,7 @@ namespace com.adjust.sdk
         [Obsolete("This method is intended for testing purposes only. Do not use it.")]
         public static void setReferrer(string referrer)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -776,7 +760,7 @@ namespace com.adjust.sdk
 
         public static void getGoogleAdId(Action<string> onDeviceIdsRead)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
@@ -973,7 +957,7 @@ namespace com.adjust.sdk
 
         public static void SetTestOptions(Dictionary<string, string> testOptions)
         {
-            if (IsEditor()) 
+            if (IsEditor())
             {
                 return;
             }
